@@ -1,0 +1,3 @@
+https://azure.microsoft.com/en-us/blog/feed/
+https://kubernetes.io/feed.xml
+https://woivre.fr/feed.xml
