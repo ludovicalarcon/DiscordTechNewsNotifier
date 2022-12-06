@@ -1,3 +1,16 @@
 https://azure.microsoft.com/en-us/blog/feed/
+https://azure.microsoft.com/en-us/updates/feed/
 https://kubernetes.io/feed.xml
 https://woivre.fr/feed.xml
+https://woivre.com/feed.xml
+https://pixelrobots.co.uk/feed/
+https://blog.zwindler.fr/index.xml
+https://anaisurl.com/blog/rss/
+https://blog.ediri.io/rss.xml
+https://www.damyr.fr/index.xml
+https://blog.filador.fr/rss/
+https://www.mcorbin.fr/feed.xml
+https://blog.stephane-robert.info/feed.xml
+https://tferdinand.net/rss/
+https://github.com/Azure/AKS/releases.atom
+https://github.com/kubernetes/kubernetes/releases.atom
