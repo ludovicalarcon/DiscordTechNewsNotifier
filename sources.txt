@@ -12,5 +12,6 @@ https://blog.filador.fr/rss/
 https://www.mcorbin.fr/feed.xml
 https://blog.stephane-robert.info/feed.xml
 https://tferdinand.net/rss/
+https://cncf.io/feed
 https://github.com/Azure/AKS/releases.atom
 https://github.com/kubernetes/kubernetes/releases.atom

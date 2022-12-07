@@ -15,6 +15,11 @@ import (
 const sourcesPath = "sources.txt"
 const dbPath = "db.txt"
 
+type FeedInfo struct {
+	Title string
+	Link  string
+}
+
 func isSameDay(date1 time.Time, date2 time.Time) bool {
 	if date1.Year() == date2.Year() && date1.Month() == date2.Month() && date1.Day() == date2.Day() {
 		return true
@@ -50,8 +55,8 @@ func clearDbForNewDay(firstLine string, filePath string, file *os.File) *os.File
 	return file
 }
 
-func retrieveDbData(scanner *bufio.Scanner) map[string]string {
-	db := make(map[string]string)
+func retrieveDbData(scanner *bufio.Scanner) map[string]FeedInfo {
+	db := make(map[string]FeedInfo)
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -60,13 +65,13 @@ func retrieveDbData(scanner *bufio.Scanner) map[string]string {
 		if len(dbData) != 2 {
 			log.Println("Skiping data")
 		} else {
-			db[dbData[0]] = dbData[1]
+			db[dbData[0]] = FeedInfo{Title: dbData[1]}
 		}
 	}
 	return db
 }
 
-func initDbFile(filePath string) map[string]string {
+func initDbFile(filePath string) map[string]FeedInfo {
 
 	file, err := os.OpenFile(filePath, os.O_CREATE, 0644)
 	if err != nil {
@@ -84,7 +89,7 @@ func initDbFile(filePath string) map[string]string {
 	return db
 }
 
-func retrieveFeeds(db map[string]string, feedUrl string, currentDate time.Time) map[string]string {
+func retrieveFeeds(db map[string]FeedInfo, feedUrl string, currentDate time.Time) map[string]FeedInfo {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
@@ -96,14 +101,14 @@ func retrieveFeeds(db map[string]string, feedUrl string, currentDate time.Time) 
 	}
 
 	for _, item := range feed.Items {
-		if isSameDay(currentDate, item.PublishedParsed.UTC()) && db[item.GUID] == "" {
-			db[item.GUID] = item.Title
+		if isSameDay(currentDate, item.PublishedParsed.UTC()) && db[item.GUID] == (FeedInfo{}) {
+			db[item.GUID] = FeedInfo{Title: item.Title, Link: item.Link}
 		}
 	}
 	return db
 }
 
-func retrieveFeedsFromSources(db map[string]string) map[string]string {
+func retrieveFeedsFromSources(db map[string]FeedInfo) map[string]FeedInfo {
 	currentDate := time.Now().UTC()
 
 	file, err := os.Open(sourcesPath)
@@ -122,13 +127,13 @@ func retrieveFeedsFromSources(db map[string]string) map[string]string {
 	return db
 }
 
-func send(db map[string]string) {
+func send(db map[string]FeedInfo) {
 	for key, value := range db {
-		fmt.Printf("%s %s\n", key, value)
+		fmt.Printf("%s %s %s\n", key, value.Title, value.Link)
 	}
 }
 
-func saveDb(db map[string]string) {
+func saveDb(db map[string]FeedInfo) {
 	file, err := os.OpenFile(dbPath, os.O_APPEND|os.O_WRONLY, 0644)
 
 	if err != nil {
@@ -138,12 +143,14 @@ func saveDb(db map[string]string) {
 	defer file.Close()
 
 	for key, value := range db {
-		tmp := fmt.Sprintf("%s|-|%s\n", key, value)
+		if value.Link != "" {
+			tmp := fmt.Sprintf("%s|-|%s\n", key, value.Title)
 
-		_, err := file.WriteString(tmp)
+			_, err := file.WriteString(tmp)
 
-		if err != nil {
-			log.Fatalln(err)
+			if err != nil {
+				log.Fatalln(err)
+			}
 		}
 	}
 }
