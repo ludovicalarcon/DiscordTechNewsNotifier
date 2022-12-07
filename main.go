@@ -2,9 +2,11 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -127,9 +129,28 @@ func retrieveFeedsFromSources(db map[string]FeedInfo) map[string]FeedInfo {
 	return db
 }
 
-func send(db map[string]FeedInfo) {
-	for key, value := range db {
-		fmt.Printf("%s %s %s\n", key, value.Title, value.Link)
+func sendToDiscord(db map[string]FeedInfo) {
+
+	webhookUrl := os.Getenv("WEBHOOK")
+
+	for _, value := range db {
+		content := fmt.Sprintf("{\"content\": \"[%s](%s)\"}", value.Title, value.Link)
+		var jsonData = []byte(content)
+
+		request, _ := http.NewRequest("POST", webhookUrl, bytes.NewBuffer(jsonData))
+		request.Header.Set("Content-Type", "application/json")
+
+		client := &http.Client{}
+		response, err := client.Do(request)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		if response.StatusCode != 204 {
+			log.Println("response Status:", response.StatusCode)
+		}
+
+		response.Body.Close()
 	}
 }
 
@@ -160,7 +181,7 @@ func main() {
 	db := initDbFile(dbPath)
 	db = retrieveFeedsFromSources(db)
 
-	send(db)
+	sendToDiscord(db)
 
 	saveDb(db)
 }
