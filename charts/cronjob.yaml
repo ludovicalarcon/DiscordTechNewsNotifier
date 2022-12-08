@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: discordtechnewsnotifier
+spec:
+  schedule: "0 0 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: discordtechnewsnotifier
+            image: azalax/discordtechnewsnotifier:1.0
+            env:
+            - name: WEBHOOK
+              valueFrom:
+                secretKeyRef:
+                  name: discord-webhook
+                  key: data
+            volumeMounts:
+            - mountPath: /app/db.txt
+              subPath: db.txt
+              name: db
+          volumes:
+          - name: db
+            persistentVolumeClaim:
+              claimName: discordtechnewsnotifier
+          nodeSelector:
+            kubernetes.io/hostname: worker-node01
+          restartPolicy: OnFailure
