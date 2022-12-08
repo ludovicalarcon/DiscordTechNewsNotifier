@@ -134,23 +134,26 @@ func sendToDiscord(db map[string]FeedInfo) {
 	webhookUrl := os.Getenv("WEBHOOK")
 
 	for _, value := range db {
-		content := fmt.Sprintf("{\"content\": \"[%s](%s)\"}", value.Title, value.Link)
-		var jsonData = []byte(content)
+		if value.Link != "" {
+			content := fmt.Sprintf("{\"content\": \"[%s](%s)\"}", value.Title, value.Link)
+			var jsonData = []byte(content)
 
-		request, _ := http.NewRequest("POST", webhookUrl, bytes.NewBuffer(jsonData))
-		request.Header.Set("Content-Type", "application/json")
+			request, _ := http.NewRequest("POST", webhookUrl, bytes.NewBuffer(jsonData))
+			request.Header.Set("Content-Type", "application/json")
 
-		client := &http.Client{}
-		response, err := client.Do(request)
-		if err != nil {
-			log.Fatalln(err)
+			client := &http.Client{}
+			response, err := client.Do(request)
+			if err != nil {
+				log.Fatalln(err)
+			}
+
+			if response.StatusCode != 204 {
+				log.Println("response Status:", response.StatusCode)
+			}
+
+			response.Body.Close()
+			log.Println(value.Title)
 		}
-
-		if response.StatusCode != 204 {
-			log.Println("response Status:", response.StatusCode)
-		}
-
-		response.Body.Close()
 	}
 }
 
