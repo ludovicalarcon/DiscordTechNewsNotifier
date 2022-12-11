@@ -16,45 +16,24 @@ import (
 
 const sourcesPath = "sources.txt"
 const dbPath = "db.txt"
+const logFilePath = "logs.txt"
+const dateLayout = "2006-01-02"
+
+var currentDate = time.Now().UTC()
 
 type FeedInfo struct {
-	Title string
-	Link  string
+	Title     string
+	Link      string
+	Published time.Time
 }
 
-func isSameDay(date1 time.Time, date2 time.Time) bool {
-	if date1.Year() == date2.Year() && date1.Month() == date2.Month() && date1.Day() == date2.Day() {
-		return true
+func isFromMoreThanSevenDays(date time.Time) bool {
+	sevenDayBefore := currentDate.AddDate(0, 0, -7)
+
+	if date.Before(currentDate.Add(24*time.Hour)) && date.After(sevenDayBefore) {
+		return false
 	}
-	return false
-}
-
-func clearDbForNewDay(firstLine string, filePath string, file *os.File) *os.File {
-	const dateLayout = "2006-01-02"
-
-	currentDate := time.Now().UTC()
-	isNeededToClear := true
-
-	if firstLine != "" {
-		dbDate, err := time.Parse(dateLayout, firstLine)
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		if isSameDay(currentDate, dbDate) {
-			isNeededToClear = false
-		}
-	}
-
-	if isNeededToClear {
-		log.Println("Clear db")
-		data := []byte(fmt.Sprintf("%v\n", currentDate.Format(dateLayout)))
-		err := os.WriteFile(filePath, data, 0644)
-		if err != nil {
-			log.Fatalln(err)
-		}
-	}
-	return file
+	return true
 }
 
 func retrieveDbData(scanner *bufio.Scanner) map[string]FeedInfo {
@@ -64,10 +43,18 @@ func retrieveDbData(scanner *bufio.Scanner) map[string]FeedInfo {
 		line := scanner.Text()
 		dbData := strings.Split(line, "|-|")
 
-		if len(dbData) != 2 {
+		if len(dbData) != 3 {
 			log.Println("Skiping data")
 		} else {
-			db[dbData[0]] = FeedInfo{Title: dbData[1]}
+			parsedDate, err := time.Parse(dateLayout, dbData[2])
+			if err != nil {
+				log.Fatalln(err)
+			}
+			if isFromMoreThanSevenDays(parsedDate) {
+				log.Println(dbData[1], "is too old... discarding")
+			} else {
+				db[dbData[0]] = FeedInfo{Title: dbData[1], Published: parsedDate}
+			}
 		}
 	}
 	return db
@@ -83,8 +70,6 @@ func initDbFile(filePath string) map[string]FeedInfo {
 
 	scanner := bufio.NewScanner(file)
 	scanner.Scan()
-
-	clearDbForNewDay(scanner.Text(), filePath, file)
 
 	db := retrieveDbData(scanner)
 
@@ -103,16 +88,14 @@ func retrieveFeeds(db map[string]FeedInfo, feedUrl string, currentDate time.Time
 	}
 
 	for _, item := range feed.Items {
-		if isSameDay(currentDate, item.PublishedParsed.UTC()) && db[item.GUID] == (FeedInfo{}) {
-			db[item.GUID] = FeedInfo{Title: item.Title, Link: item.Link}
+		if !isFromMoreThanSevenDays(item.PublishedParsed.UTC()) && db[item.GUID] == (FeedInfo{}) {
+			db[item.GUID] = FeedInfo{Title: item.Title, Link: item.Link, Published: item.PublishedParsed.UTC()}
 		}
 	}
 	return db
 }
 
 func retrieveFeedsFromSources(db map[string]FeedInfo) map[string]FeedInfo {
-	currentDate := time.Now().UTC()
-
 	file, err := os.Open(sourcesPath)
 	if err != nil {
 		log.Fatalln(err)
@@ -135,30 +118,34 @@ func sendToDiscord(db map[string]FeedInfo) {
 
 	for _, value := range db {
 		if value.Link != "" {
-			content := fmt.Sprintf("{\"content\": \"[%s](%s)\"}", value.Title, value.Link)
-			var jsonData = []byte(content)
+			if webhookUrl != "" {
+				content := fmt.Sprintf("{\"content\": \"[%s](%s)\"}", value.Title, value.Link)
+				var jsonData = []byte(content)
 
-			request, _ := http.NewRequest("POST", webhookUrl, bytes.NewBuffer(jsonData))
-			request.Header.Set("Content-Type", "application/json")
+				request, _ := http.NewRequest("POST", webhookUrl, bytes.NewBuffer(jsonData))
+				request.Header.Set("Content-Type", "application/json")
 
-			client := &http.Client{}
-			response, err := client.Do(request)
-			if err != nil {
-				log.Fatalln(err)
+				client := &http.Client{}
+				response, err := client.Do(request)
+				if err != nil {
+					log.Fatalln(err)
+				}
+
+				if response.StatusCode != 204 {
+					log.Println("response Status:", response.StatusCode)
+				}
+
+				response.Body.Close()
+				log.Println(value.Title)
+			} else {
+				log.Println(value.Title, value.Link, value.Published)
 			}
-
-			if response.StatusCode != 204 {
-				log.Println("response Status:", response.StatusCode)
-			}
-
-			response.Body.Close()
-			log.Println(value.Title)
 		}
 	}
 }
 
 func saveDb(db map[string]FeedInfo) {
-	file, err := os.OpenFile(dbPath, os.O_APPEND|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(dbPath, os.O_WRONLY, 0644)
 
 	if err != nil {
 		log.Fatalln(err)
@@ -166,20 +153,31 @@ func saveDb(db map[string]FeedInfo) {
 
 	defer file.Close()
 
+	err = os.WriteFile(dbPath, []byte(""), 0644)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	for key, value := range db {
-		if value.Link != "" {
-			tmp := fmt.Sprintf("%s|-|%s\n", key, value.Title)
+		tmp := fmt.Sprintf("%s|-|%s|-|%s\n", key, value.Title, value.Published.Format(dateLayout))
 
-			_, err := file.WriteString(tmp)
+		_, err := file.WriteString(tmp)
 
-			if err != nil {
-				log.Fatalln(err)
-			}
+		if err != nil {
+			log.Fatalln(err)
 		}
 	}
 }
 
 func main() {
+	logFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer logFile.Close()
+
+	log.SetOutput(logFile)
 
 	db := initDbFile(dbPath)
 	db = retrieveFeedsFromSources(db)

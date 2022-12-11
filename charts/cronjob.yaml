@@ -3,14 +3,14 @@ kind: CronJob
 metadata:
   name: discordtechnewsnotifier
 spec:
-  schedule: "0 0 * * *"
+  schedule: "59 */1 * * *"
   jobTemplate:
     spec:
       template:
         spec:
           containers:
           - name: discordtechnewsnotifier
-            image: azalax/discordtechnewsnotifier:1.0
+            image: azalax/discordtechnewsnotifier:1.1
             env:
             - name: WEBHOOK
               valueFrom:
@@ -20,6 +20,9 @@ spec:
             volumeMounts:
             - mountPath: /app/db.txt
               subPath: db.txt
+              name: db
+            - mountPath: /app/logs.txt
+              subPath: logs.txt
               name: db
           volumes:
           - name: db
