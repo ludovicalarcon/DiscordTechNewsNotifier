@@ -132,11 +132,12 @@ func sendToDiscord(db map[string]FeedInfo) {
 				}
 
 				if response.StatusCode != 204 {
-					log.Println("response Status:", response.StatusCode)
+					log.Println("ERROR: response Status:", response.StatusCode)
 				}
 
 				response.Body.Close()
 				log.Println(value.Title)
+				time.Sleep(10 * time.Second)
 			} else {
 				log.Println(value.Title, value.Link, value.Published)
 			}
