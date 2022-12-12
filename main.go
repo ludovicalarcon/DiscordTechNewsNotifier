@@ -53,6 +53,7 @@ func retrieveDbData(scanner *bufio.Scanner) map[string]FeedInfo {
 			if isFromMoreThanSevenDays(parsedDate) {
 				log.Println(dbData[1], "is too old... discarding")
 			} else {
+				log.Println("Retrieve from db", dbData[1])
 				db[dbData[0]] = FeedInfo{Title: dbData[1], Published: parsedDate}
 			}
 		}
@@ -88,10 +89,15 @@ func retrieveFeeds(db map[string]FeedInfo, feedUrl string, currentDate time.Time
 	}
 
 	for _, item := range feed.Items {
-		if !isFromMoreThanSevenDays(item.PublishedParsed.UTC()) && db[item.GUID] == (FeedInfo{}) {
+		published := item.PublishedParsed.UTC()
+		date := time.Date(published.Year(), published.Month(), published.Day(), 0, 0, 0, 0, time.UTC)
+		if !isFromMoreThanSevenDays(date) && db[item.GUID] == (FeedInfo{}) {
+			log.Println("Add to db", item.Title)
 			db[item.GUID] = FeedInfo{Title: item.Title, Link: item.Link, Published: item.PublishedParsed.UTC()}
 		}
 	}
+
+	time.Sleep(2 * time.Second)
 	return db
 }
 
@@ -137,7 +143,7 @@ func sendToDiscord(db map[string]FeedInfo) {
 
 				response.Body.Close()
 				log.Println(value.Title)
-				time.Sleep(10 * time.Second)
+				time.Sleep(2 * time.Second)
 			} else {
 				log.Println(value.Title, value.Link, value.Published)
 			}
