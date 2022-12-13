@@ -51,9 +51,9 @@ func retrieveDbData(scanner *bufio.Scanner) map[string]FeedInfo {
 				log.Fatalln(err)
 			}
 			if isFromMoreThanSevenDays(parsedDate) {
-				log.Println(dbData[1], "is too old... discarding")
+				log.Println(dbData[1], "is too old... discarding - ", parsedDate)
 			} else {
-				log.Println("Retrieve from db", dbData[1])
+				log.Println("Retrieve from db", dbData[1], " - ", parsedDate.Format(dateLayout))
 				db[dbData[0]] = FeedInfo{Title: dbData[1], Published: parsedDate}
 			}
 		}
@@ -70,7 +70,6 @@ func initDbFile(filePath string) map[string]FeedInfo {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-	scanner.Scan()
 
 	db := retrieveDbData(scanner)
 
@@ -78,7 +77,7 @@ func initDbFile(filePath string) map[string]FeedInfo {
 }
 
 func retrieveFeeds(db map[string]FeedInfo, feedUrl string, currentDate time.Time) map[string]FeedInfo {
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 
 	fp := gofeed.NewParser()
@@ -92,12 +91,11 @@ func retrieveFeeds(db map[string]FeedInfo, feedUrl string, currentDate time.Time
 		published := item.PublishedParsed.UTC()
 		date := time.Date(published.Year(), published.Month(), published.Day(), 0, 0, 0, 0, time.UTC)
 		if !isFromMoreThanSevenDays(date) && db[item.GUID] == (FeedInfo{}) {
-			log.Println("Add to db", item.Title)
-			db[item.GUID] = FeedInfo{Title: item.Title, Link: item.Link, Published: item.PublishedParsed.UTC()}
+			log.Println("Add to db", item.Title, " - ", date)
+			db[item.GUID] = FeedInfo{Title: item.Title, Link: item.Link, Published: date}
 		}
 	}
 
-	time.Sleep(2 * time.Second)
 	return db
 }
 
@@ -113,6 +111,7 @@ func retrieveFeedsFromSources(db map[string]FeedInfo) map[string]FeedInfo {
 	for scanner.Scan() {
 		url := scanner.Text()
 		db = retrieveFeeds(db, url, currentDate)
+		time.Sleep(2 * time.Second)
 	}
 
 	return db
@@ -125,7 +124,7 @@ func sendToDiscord(db map[string]FeedInfo) {
 	for _, value := range db {
 		if value.Link != "" {
 			if webhookUrl != "" {
-				content := fmt.Sprintf("{\"content\": \"[%s](%s)\"}", value.Title, value.Link)
+				content := fmt.Sprintf("{\"content\": \"[%s](%s) - %s\"}", value.Title, value.Link, value.Published)
 				var jsonData = []byte(content)
 
 				request, _ := http.NewRequest("POST", webhookUrl, bytes.NewBuffer(jsonData))
@@ -173,6 +172,8 @@ func saveDb(db map[string]FeedInfo) {
 		if err != nil {
 			log.Fatalln(err)
 		}
+
+		log.Println("Saving to db:", value.Title, value.Published.Format(dateLayout))
 	}
 }
 
@@ -192,4 +193,5 @@ func main() {
 	sendToDiscord(db)
 
 	saveDb(db)
+	log.Println("------------------------------------------")
 }
