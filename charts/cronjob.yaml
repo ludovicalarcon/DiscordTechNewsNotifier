@@ -10,7 +10,7 @@ spec:
         spec:
           containers:
           - name: discordtechnewsnotifier
-            image: azalax/discordtechnewsnotifier:1.1
+            image: azalax/discordtechnewsnotifier:1.3
             env:
             - name: WEBHOOK
               valueFrom:
