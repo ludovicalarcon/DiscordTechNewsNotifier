@@ -1,0 +1,17 @@
+name: Helm template
+on: [push]
+
+jobs:
+  helm-template:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download helm
+        run: |
+          curl -O https://get.helm.sh/helm-v3.10.3-linux-amd64.tar.gz
+          tar -zxvf helm-v3.10.3-linux-amd64.tar.gz
+          mv linux-amd64/helm .
+          ./helm version
+          ls -la
+      - name: Helm template
+        run: ./helm template charts/ --debug --set="discordWebhook.url"="toto"
