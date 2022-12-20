@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "discord-tech-news-notifier.name" . }}
+spec:
+  schedule: {{ .Values.cronjob.schedule | quote }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: discordtechnewsnotifier
+            image: {{ .Values.cronjob.image }}:{{ .Values.cronjob.tag }}
+            env:
+            - name: WEBHOOK
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.discordWebhook.secretName }}
+                  key: {{ .Values.discordWebhook.secretKey }}
+            volumeMounts:
+            - mountPath: {{ .Values.cronjob.mountPath }}/db.txt
+              subPath: db.txt
+              name: db
+            - mountPath: {{ .Values.cronjob.mountPath }}/logs.txt
+              subPath: logs.txt
+              name: db
+          volumes:
+          - name: db
+            persistentVolumeClaim:
+              claimName: {{ include "discord-tech-news-notifier.volumeClaimName" . }}
+          nodeSelector:
+            kubernetes.io/hostname: {{ .Values.cronjob.nodeName }}
+          restartPolicy: {{ .Values.cronjob.restartPolicy }}
