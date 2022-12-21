@@ -17,6 +17,10 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.discordWebhook.secretName }}
                   key: {{ .Values.discordWebhook.secretKey }}
+          {{- if .Values.cronjob.debug }}
+            - name: DEBUG
+              value: true
+          {{- end }}
             volumeMounts:
             - mountPath: {{ .Values.cronjob.mountPath }}/db.txt
               subPath: db.txt

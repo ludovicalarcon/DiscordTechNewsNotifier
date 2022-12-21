@@ -1,10 +1,11 @@
 cronjob:
   image: "azalax/discordtechnewsnotifier"
-  tag: "1.3"
+  tag: "1.4"
   schedule: "59 */1 * * *"
   mountPath: "/data"
   nodeName: "worker-node01"
   restartPolicy: "OnFailure"
+  debug: false
 
 discordWebhook:
   secretName: "discord-webhook"

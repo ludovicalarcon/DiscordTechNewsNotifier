@@ -1,8 +1,8 @@
-name: Helm template
+name: Helm
 on: [push]
 
 jobs:
-  helm-template:
+  helm:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -13,5 +13,11 @@ jobs:
           mv linux-amd64/helm .
           ./helm version
           ls -la
+
       - name: Helm template
-        run: ./helm template charts/ --debug --set="discordWebhook.url"="toto"
+        run: ./helm template charts/ --debug --set="discordWebhook.url"="foo"
+
+      - name: Helm unittest
+        run: |
+          ./helm plugin install https://github.com/quintush/helm-unittest
+          ./helm unittest charts/ -3

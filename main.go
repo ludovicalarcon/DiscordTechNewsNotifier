@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -178,14 +179,18 @@ func saveDb(db map[string]FeedInfo) {
 }
 
 func main() {
-	logFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
+	debugMode, _ := strconv.ParseBool(os.Getenv("DEBUG"))
 
-	if err != nil {
-		log.Fatalln(err)
+	if debugMode {
+		logFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
+
+		if err != nil {
+			log.Fatalln(err)
+		}
+		defer logFile.Close()
+
+		log.SetOutput(logFile)
 	}
-	defer logFile.Close()
-
-	log.SetOutput(logFile)
 
 	db := initDbFile(dbPath)
 	db = retrieveFeedsFromSources(db)

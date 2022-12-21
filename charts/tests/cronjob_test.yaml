@@ -1,0 +1,22 @@
+suite: cronjob tests
+templates:
+  - cronjob.yaml
+tests:
+  - it: Should be of type cronjob
+    asserts:
+      - isKind:
+          of: CronJob
+      - isAPIVersion:
+          of: "batch/v1"
+
+  - it: Should add DEBUG env variable in debug mode
+    set:
+      cronjob:
+        debug: true
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env[1].name
+          value: "DEBUG"
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env[1].value
+          value: true

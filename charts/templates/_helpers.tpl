@@ -3,7 +3,7 @@
 {{- end -}}
 
 {{- define "discord-tech-news-notifier.webhookUrl" -}}
-{{ required "You must provide the webhook url: .Values.discordWebhook.url" .Values.discordWebhook.url | b64enc }}
+{{ required "You must provide the webhook url; .Values.discordWebhook.url" .Values.discordWebhook.url | b64enc }}
 {{- end -}}
 
 {{- define "discord-tech-news-notifier.volumeClaimName" -}}
