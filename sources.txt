@@ -5,7 +5,7 @@ https://woivre.fr/feed.xml
 https://woivre.com/feed.xml
 https://pixelrobots.co.uk/feed/
 https://blog.zwindler.fr/index.xml
-https://anaisurl.com/blog/rss/
+https://anaisurl.com/rss/
 https://blog.ediri.io/rss.xml
 https://www.damyr.fr/index.xml
 https://blog.filador.fr/rss/
