@@ -85,15 +85,19 @@ func retrieveFeeds(db map[string]FeedInfo, feedUrl string, currentDate time.Time
 	feed, err := fp.ParseURLWithContext(feedUrl, ctx)
 
 	if err != nil {
-		log.Fatalln(err)
-	}
+		msg := fmt.Sprintf("Could not retrieve feed %s", feedUrl)
+		date := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC)
+		log.Printf("%s: %v", msg, err)
+		db["ERROR"] = FeedInfo{Title: msg, Link: feedUrl, Published: date}
+	} else {
 
-	for _, item := range feed.Items {
-		published := item.PublishedParsed.UTC()
-		date := time.Date(published.Year(), published.Month(), published.Day(), 0, 0, 0, 0, time.UTC)
-		if !isFromMoreThanSevenDays(date) && db[item.GUID] == (FeedInfo{}) {
-			log.Println("Add to db", item.Title, " - ", date)
-			db[item.GUID] = FeedInfo{Title: item.Title, Link: item.Link, Published: date}
+		for _, item := range feed.Items {
+			published := item.PublishedParsed.UTC()
+			date := time.Date(published.Year(), published.Month(), published.Day(), 0, 0, 0, 0, time.UTC)
+			if !isFromMoreThanSevenDays(date) && db[item.GUID] == (FeedInfo{}) {
+				log.Println("Add to db", item.Title, " - ", date)
+				db[item.GUID] = FeedInfo{Title: item.Title, Link: item.Link, Published: date}
+			}
 		}
 	}
 
@@ -134,16 +138,17 @@ func sendToDiscord(db map[string]FeedInfo) {
 				client := &http.Client{}
 				response, err := client.Do(request)
 				if err != nil {
-					log.Fatalln(err)
-				}
+					log.Println("ERROR: could not send to discord", err)
+				} else {
 
-				if response.StatusCode != 204 {
-					log.Println("ERROR: response Status:", response.StatusCode)
-				}
+					if response.StatusCode != 204 {
+						log.Println("ERROR: response Status:", response.StatusCode)
+					}
 
-				response.Body.Close()
-				log.Println(value.Title)
-				time.Sleep(2 * time.Second)
+					response.Body.Close()
+					log.Println(value.Title)
+					time.Sleep(2 * time.Second)
+				}
 			} else {
 				log.Println(value.Title, value.Link, value.Published)
 			}
