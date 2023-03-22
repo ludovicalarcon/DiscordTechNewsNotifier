@@ -1,0 +1,33 @@
+name: 'Build image'
+on:
+  push:
+    branches:
+      - 'main'
+
+  schedule:
+    - cron: '0 1 * * 1'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - run: git fetch --force --tags
+
+      - name: Compute tag
+        id: vars
+        run: |
+          TAG=$(git tag | sort --version-sort | tail -n1)
+          TMP=${TAG%.*}
+          MINOR=${TMP#*.}
+          NEW_TAG=${TAG%%.*}.$((MINOR + 1)).0
+          echo "tag=$(echo $NEW_TAG)" >> $GITHUB_OUTPUT
+
+      - name: Build
+        run: echo ${{ steps.vars.outputs.tag }}
+        
