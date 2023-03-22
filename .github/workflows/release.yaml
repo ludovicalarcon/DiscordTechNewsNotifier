@@ -1,0 +1,13 @@
+name: Major Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  bump-major:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Release
+        run: echo ${{ github.ref_name }}

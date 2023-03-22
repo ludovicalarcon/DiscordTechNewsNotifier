@@ -8,7 +8,7 @@ on:
     - cron: '0 1 * * 1'
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 jobs:
@@ -17,7 +17,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - run: git fetch --force --tags
+        with:
+          fetch-depth: 0
 
       - name: Compute tag
         id: vars
@@ -26,8 +27,46 @@ jobs:
           TMP=${TAG%.*}
           MINOR=${TMP#*.}
           NEW_TAG=${TAG%%.*}.$((MINOR + 1)).0
-          echo "tag=$(echo $NEW_TAG)" >> $GITHUB_OUTPUT
+          echo "tag=$(echo "${NEW_TAG:1}")" >> $GITHUB_OUTPUT
+          echo "current_tag=$(echo "${TAG:1}")" >> $GITHUB_OUTPUT
 
-      - name: Build
-        run: echo ${{ steps.vars.outputs.tag }}
-        
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            azalax/discordtechnewsnotifier:latest
+            azalax/discordtechnewsnotifier:${{ steps.vars.outputs.tag }}
+            ghcr.io/ludovicalarcon/discordtechnewsnotifier:latest
+            ghcr.io/ludovicalarcon/discordtechnewsnotifier:${{ steps.vars.outputs.tag }}
+
+      - name: Update Chart Version
+        run: |
+          sed -i 's/${{ steps.vars.outputs.current_tag }}/${{ steps.vars.outputs.tag }}/' charts/Chart.yaml
+          sed -i 's/${{ steps.vars.outputs.current_tag }}/${{ steps.vars.outputs.tag }}/' charts/values.yaml
+
+          git config --global user.name "ci-bot"
+          git config --global user.email "ci-bot@ludovicalarcon.noreply.github.com"
+          git add .
+          git commit -m "Update version"
+          git push
+
+      - name: Update Tag
+        run: |
+          git tag -a v${{ steps.vars.outputs.tag }} -m "v${{ steps.vars.outputs.tag }}"
+          git push origin v${{ steps.vars.outputs.tag }}
