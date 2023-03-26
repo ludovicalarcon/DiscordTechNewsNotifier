@@ -1,6 +1,6 @@
-FROM golang:1.19-alpine
+FROM golang:1.20-alpine
 
-RUN adduser go
+RUN adduser -S go
 USER go
 WORKDIR /home/go/app
 
