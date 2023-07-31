@@ -16,3 +16,4 @@ https://cncf.io/feed
 https://k33g.hashnode.dev/rss.xml
 https://github.com/Azure/AKS/releases.atom
 https://github.com/kubernetes/kubernetes/releases.atom
+https://une-tasse-de.cafe/index.xml
