@@ -20,4 +20,4 @@ jobs:
       - name: Helm unittest
         run: |
           ./helm plugin install https://github.com/quintush/helm-unittest
-          ./helm unittest charts/ -3
+          ./helm unittest charts/

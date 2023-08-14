@@ -43,7 +43,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push
+      - name: Build and push (amd)
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -54,6 +54,16 @@ jobs:
             azalax/discordtechnewsnotifier:${{ steps.vars.outputs.tag }}
             ghcr.io/ludovicalarcon/discordtechnewsnotifier:latest
             ghcr.io/ludovicalarcon/discordtechnewsnotifier:${{ steps.vars.outputs.tag }}
+
+      - name: Build and push (arm)
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile_arm
+          push: true
+          tags: |
+            azalax/discordtechnewsnotifier:${{ steps.vars.outputs.tag }}_arm
+            ghcr.io/ludovicalarcon/discordtechnewsnotifier:${{ steps.vars.outputs.tag }}_arm
 
       - name: Update Chart Version
         run: |

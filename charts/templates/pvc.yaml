@@ -9,7 +9,17 @@ spec:
     - ReadWriteOnce
   hostPath:
     path: {{ .Values.volume.hostPath }}
+  volumeMode: Filesystem
   persistentVolumeReclaimPolicy: Retain
+  storageClassName: "local-storage"
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ .Values.cronjob.nodeName }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -22,3 +32,4 @@ spec:
     requests:
       storage: {{ .Values.volume.capacity }}
   volumeName: {{ include "discord-tech-news-notifier.volumeClaimName" . }}
+  storageClassName: "local-storage"

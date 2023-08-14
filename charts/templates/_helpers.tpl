@@ -1,5 +1,5 @@
 {{- define "discord-tech-news-notifier.name" -}}
-{{ printf "%s-%s" "discord-tech-news-notifier" .Chart.AppVersion }}
+{{ printf "%s-%s" "discord-tech-news-notifier" .Chart.AppVersion | replace "." "-" }}
 {{- end -}}
 
 {{- define "discord-tech-news-notifier.webhookUrl" -}}

@@ -2,15 +2,15 @@ cronjob:
   image: "azalax/discordtechnewsnotifier"
   tag: "1.31.0"
   schedule: "59 */1 * * *"
-  mountPath: "/data"
-  nodeName: "worker-node01"
+  mountPath: "/home/go/app"
+  nodeName: "worker01"
   restartPolicy: "OnFailure"
   debug: false
 
 discordWebhook:
   secretName: "discord-webhook"
   secretKey: "webhook"
-
+  url: ""
 volume:
-  hostPath: "/mnt"
+  hostPath: "/mnt/data"
   capacity: 2Gi

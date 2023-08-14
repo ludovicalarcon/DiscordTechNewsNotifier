@@ -32,6 +32,4 @@ spec:
           - name: db
             persistentVolumeClaim:
               claimName: {{ include "discord-tech-news-notifier.volumeClaimName" . }}
-          nodeSelector:
-            kubernetes.io/hostname: {{ .Values.cronjob.nodeName }}
           restartPolicy: {{ .Values.cronjob.restartPolicy }}

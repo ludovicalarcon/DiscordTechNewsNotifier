@@ -3,6 +3,9 @@ templates:
   - cronjob.yaml
 tests:
   - it: Should be of type cronjob
+    set:
+      discordWebhook:
+        url: "https://webhook.com"
     asserts:
       - isKind:
           of: CronJob
@@ -13,6 +16,8 @@ tests:
     set:
       cronjob:
         debug: true
+      discordWebhook:
+        url: "https://webhook.com"
     asserts:
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].env[1].name
