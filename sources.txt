@@ -10,7 +10,7 @@ https://blog.ediri.io/rss.xml
 https://www.damyr.fr/index.xml
 https://blog.filador.fr/rss/
 https://www.mcorbin.fr/feed.xml
-https://blog.stephane-robert.info/feed.xml
+https://blog.stephane-robert.info/post/rss.xml
 https://tferdinand.net/rss/
 https://cncf.io/feed
 https://k33g.hashnode.dev/rss.xml
