@@ -17,3 +17,6 @@ https://k33g.hashnode.dev/rss.xml
 https://github.com/Azure/AKS/releases.atom
 https://github.com/kubernetes/kubernetes/releases.atom
 https://une-tasse-de.cafe/index.xml
+https://github.com/helm/helm/releases.atom
+https://github.com/helm-unittest/helm-unittest/releases.atom
+https://github.com/argoproj/argo-cd/releases.atom
