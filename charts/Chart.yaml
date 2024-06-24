@@ -3,4 +3,4 @@ name: DiscordTechNewsNotifier
 description: A Helm chart to install DiscordTechNewsNotifier as a cronjob.
 type: application
 version: 0.1.1
-appVersion: "1.74.0"
+appVersion: "1.75.0"
