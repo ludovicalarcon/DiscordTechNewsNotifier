@@ -1,6 +1,6 @@
 cronjob:
   image: "azalax/discordtechnewsnotifier"
-  tag: "1.158.0"
+  tag: "1.159.0"
   schedule: "59 */1 * * *"
   mountPath: "/home/go/app"
   nodeName: "worker01"
